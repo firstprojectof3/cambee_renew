@@ -1,15 +1,15 @@
 # app/main.py (또는 네가 서버 올리는 엔트리 파일)
 
 from fastapi import FastAPI
-from routers import chat, user
+from app.routers import chat, user
 from routers import notice, feedback, preference
 
 # ⬇⬇⬇ [추가] CORS 미들웨어
 from fastapi.middleware.cors import CORSMiddleware
 
 # DB 관련 import
-from database import engine, get_db
-from schema_models import Base
+from cambee.app.database import engine, get_db
+from cambee.app.schema_models import Base
 
 # DB 테이블 생성
 Base.metadata.create_all(bind=engine)
