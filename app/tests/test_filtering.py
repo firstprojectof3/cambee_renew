@@ -1,6 +1,6 @@
-from cambee.app.database import SessionLocal
-from cambee.app.schema_models import User, Notice
-from cambee.app.crud import filter_notices_by_user_info
+from app.database import SessionLocal
+from app.schema_models import User, Notice
+from app.crud import filter_notices_by_user_info
 
 # 테스트 유저 리스트
 test_users_ids = ["2101001", "2202002", "2303003"]

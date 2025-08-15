@@ -3,14 +3,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from cambee.app.crud import get_user_by_id
-from schemas import ChatRequest, ChatResponse
-from database import get_db
-from schema_models import ChatLog
+from app.schemas import ChatRequest, ChatResponse
+from app.crud import get_user_by_id
+from app.database import get_db
+from app.schema_models import ChatLog
 
 # notices 로드 (ORM 객체일 수도 있음)
 try:
-    from insert_dummy_data import test_notices  # list[Notice | dict | str]
+    from app.tests.insert_dummy_data import test_notices  # list[Notice | dict | str]
     RAW_NOTICES = test_notices
 except Exception as e:
     print(f"[WARN] insert_dummy_data.test_notices import 실패: {e}")

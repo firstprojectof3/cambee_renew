@@ -3,8 +3,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import json, re
 
 from sqlalchemy.orm import Session
-from schema_models import User
-from schemas import UserCreate
+from app.schema_models import User
+from app.schemas import UserCreate
 
 # ---------------- DB ----------------
 def create_user(db: Session, user: UserCreate):
