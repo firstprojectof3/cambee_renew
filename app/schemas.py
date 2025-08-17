@@ -40,7 +40,7 @@ class ChatRequest(BaseModel):
     message: str
 
 class ChatResponse(BaseModel):
-    summary: str
+    reply: str
     timestamp: str
 
 class UserPreference(BaseModel):

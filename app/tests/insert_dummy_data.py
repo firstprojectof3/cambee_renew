@@ -56,6 +56,19 @@ test_notices = [
         target_major=None,
         target_student_number=None
     ),
+    
+    # 학사 test2
+    Notice(
+        category="학사",
+        title="컴퓨터공학 전공인턴십 수강절차 안내",
+        content="컴퓨터공학 인턴십 및 sw 산학실무 설계 교과목 수강 절차를 안내드립니다.",
+        url="https://cse.ewha.ac.kr/cse/student/notice.do?mode=view&articleNo=638645&article.offset=10&articleLimit=10",
+        date=datetime(2022, 2, 14),
+        target_grade=None,
+        target_major="컴퓨터공학전공",
+        target_student_number=None
+    ),
+    
 
 
     # 장학 test
@@ -79,7 +92,10 @@ test_notices = [
         date=datetime(2025, 8, 4),
         target_grade=None,             
         target_major=None,         
-        target_student_number=None      
+        target_student_number=None
+        
+        
+              
     )
 ]
 
