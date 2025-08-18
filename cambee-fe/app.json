@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "cambee-fe",
+    "slug": "cambee-fe",
+    "icon": null,
+    "splash": {
+      "image": null,
+      "backgroundColor": "#FFFFFF"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
