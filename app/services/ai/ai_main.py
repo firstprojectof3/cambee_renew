@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import openai
 
 from app.services.ai.prompt.prompt_builder import build_generic_prompt
-from app.services.test.insert_dummy_data import get_user_by_id
+from app.services.tests.insert_dummy_data import get_user_by_id
 from app.services.ai.ai_setting import call_openai, client
 from app.schemas import ChatResponse, ChatResponseItem, ChatRequest
 
