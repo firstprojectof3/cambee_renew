@@ -1,9 +1,12 @@
 # app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.services.ai.ai_main import ai_main 
 # 라우터 임포트
 from app.routers import chat, user, notice, feedback, preference
+
+# ai 라우터
+from app.services.ai.ai_main import router as ai_router
 
 app = FastAPI()
 
@@ -22,6 +25,9 @@ app.include_router(user.router, prefix="/api")
 app.include_router(notice.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(preference.router, prefix="/api")
+
+# ✅ AI 라우터 등록
+app.include_router(ai_router, prefix="/api")
 
 # 기본 엔드포인트
 @app.get("/")
