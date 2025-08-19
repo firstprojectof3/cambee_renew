@@ -13,7 +13,9 @@ export default function MessageBubble({
         padding:12, borderRadius:18,
         backgroundColor: isUser ? "#ebe8ddff" : "#FEF0B8"
       }}>
-        <Text style={[{fontWeight:"300"}, textStyle]}>{children}</Text>
+        {typeof children === "string"
+          ? <Text style={{fontWeight:"300"}}>{children}</Text>
+          : children}
       </View>
     </View>
   );
