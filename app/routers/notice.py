@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, Any, Dict, List
 
 from app.database import get_db
-from app.schema_models import User, Notice
+from app.models.models import User, Notice
 from app.crud import filter_notices_by_user_info
 
 router = APIRouter(prefix="/notice", tags=["notice"])

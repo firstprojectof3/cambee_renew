@@ -1,5 +1,5 @@
 from app.database import SessionLocal
-from app.schema_models import User, Notice
+from app.models.models import User, Notice
 from app.crud import filter_notices_by_user_info
 
 # 테스트 유저 리스트

@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
-from app.schema_models import User, Notice
+from app.models.models import User, Notice
 from datetime import datetime
 
 db: Session = SessionLocal()

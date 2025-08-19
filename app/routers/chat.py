@@ -1,19 +1,26 @@
-# routers/chat.py
+# app/routers/chat.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 import re
 
-# Pydantic 스키마 임포트 (수정된 app/schemas.py에서 가져옴)
-from app.schemas import ChatRequest, ChatResponse, User as PydanticUser # Pydantic User 모델 임포트
-# DB 모델 임포트
-from app.crud import get_user_by_id # 사용자 정보를 DB에서 가져오는 함수
+# Pydantic 스키마
+from app.schemas import ChatRequest, ChatResponse, User as PydanticUser
+
+# DB / CRUD
 from app.database import get_db
-from app.schema_models import ChatLog, User # DB 모델의 User와 Notice 임포트
+from app.crud import get_user_by_id, get_cached_answer, upsert_cache  # 사용자 조회 (네 기존 코드 유지)
+
+# DB 모델 (네 프로젝트 경로 유지)
+from app.models.models import ChatLog, User
+
+#캐시 미스나면 openai 호출
+from app.services.llm import gpt_answer  
+
 
 # Notice 모델(있으면 사용)
 try:
-    from app.schema_models import Notice
+    from app.models.models import Notice
 except Exception:
     Notice = None
 
@@ -211,13 +218,10 @@ def match_intent(notice, intent: str) -> bool:
 def match_major(notice, major_canon: str) -> bool:
     if not major_canon:
         return True
-    
     notice_dept = canonical_major(notice["dept"])
     notice_title = canonical_major(notice["title"])
     notice_category = canonical_major(notice["category"])
-
     syns = [canonical_major(s) for s in MAJOR_SYNONYMS.get(major_canon, [major_canon])]
-    
     for w in syns:
         if w and (w in notice_dept or w in notice_title or w in notice_category):
             return True
@@ -229,98 +233,83 @@ def filter_with_intent_and_major(notices, intent: str, major_canon: str, major_s
         base = notices[:]
     if not base:
         return []
-
     if major_source in ("explicit", "mine") and major_canon:
         return [n for n in base if match_major(n, major_canon)]
-
     return base
 
-# ---------------- 라우터 ----------------
+
+    
+    
+    # ---------------- 라우터 ----------------
 @router.post("/chat", response_model=ChatResponse)
 async def chat_api(request: ChatRequest, db: Session = Depends(get_db)):
-    # 0) 유저 확인: ChatRequest에서 받은 user_id를 사용
-    uid_raw = request.user_id # request.user_id는 이미 constr 패턴으로 유효성 검사됨
-    uid_str = str(uid_raw).strip() # 혹시 모를 공백 제거 및 문자열 확실히 보장
-
+    # 0) 유저 확인
+    uid_raw = request.user_id
+    uid_str = str(uid_raw).strip()
     user = get_user_by_id(db, uid_str)
-    
-    # DB의 user_id 타입이 int일 경우를 대비한 추가 시도 (필요시)
-    # 현재 Pydantic ChatRequest의 user_id는 str(숫자만)이므로, DB의 user_id 타입에 따라 적절히 변환.
-    # 만약 DB의 user_id가 int라면 아래 로직 필요.
-    # if not user:
-    #     try:
-    #         user = get_user_by_id(db, int(uid_str))
-    #     except ValueError:
-    #         pass # int 변환 실패 시 무시
-
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"사용자 정보를 찾을 수 없습니다. (user_id='{uid_str}')",
         )
 
-    # 1) 공지 로드
-    notices = load_normalized_notices(db)
+    # 1) 질문 추출
+    question = (request.message or "").strip()
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="질문이 비어 있습니다.",
+        )
 
-    # 2) 의도 + 전공 결정
-    intent = choose_intent(request.message)
-    major_canon, major_source = find_major_in_text(request.message, user.major) 
+    # 2) ✅ 캐시 먼저 조회
+    cached = get_cached_answer(db, question)
+    if cached:
+        return ChatResponse(
+            title=cached.title or "자동 생성된 요약",
+            link=cached.link,
+            summary=cached.summary or "",
+        )
 
-    # 3) 필터링
-    filtered = filter_with_intent_and_major(notices, intent, major_canon, major_source)
+    # 3) (캐시 미스) → GPT 호출로 답변 생성
+    try:
+        out = gpt_answer(question)  # 팀 시스템 프롬프트는 env/파일로 주입됨
+        gpt_title = out.get("title") or "자동 생성된 요약"
+        gpt_link = out.get("link")
+        gpt_summary = out.get("summary") or ""
+    except Exception as e:
+        print(f"[WARN] GPT call failed: {e}")
+        gpt_title = "GPT 응답 생성 실패(임시)"
+        gpt_link = None
+        gpt_summary = "현재 외부 응답 생성에 실패했습니다. 잠시 후 다시 시도해주세요."
 
-    # 4) 출력 문구
-    if filtered:
-        MAX_SHOW = 10
-        lines = []
-        for n in filtered[:MAX_SHOW]:
-            if n["url"]:
-                lines.append(f"- {n['title']} ({n['url']})")
-            else:
-                lines.append(f"- {n['title']}")
-        more = f"\n... 외 {len(filtered) - MAX_SHOW}건" if len(filtered) > MAX_SHOW else ""
-        head_parts = []
-        if intent and intent != "__ALL__":
-            head_parts.append(f"'{intent}'")
-        if major_source == "explicit" and major_canon:
-            head_parts.append(f"'{major_canon}' 전공")
-        elif major_source == "mine" and major_canon:
-            head_parts.append(f"'{major_canon}' (내 전공)")
-        head_txt = " 및 ".join(head_parts) if head_parts else "요청과 관련된"
-        
-        reply_text_body = f"{head_txt} 공지입니다:\n" + "\n. ".join(lines) + more
-    else:
-        if major_source == "explicit" and major_canon:
-            reply_text_body = f"요청하신 전공('{major_canon}')의 관련 공지를 찾지 못했어요."
-        elif major_source == "mine" and user.major:
-            reply_text_body = f"'{user.major}' (내 전공) 관련 공지를 찾지 못했어요."
-        elif intent in (None, "__ALL__"):
-            reply_text_body = "질문에서 키워드를 찾지 못했어요. 예) '학사 공지', '내 전공의 학사 공지', '컴퓨터공학 학사 공지'"
-        else:
-            reply_text_body = f"'{intent}' 관련 공지를 찾지 못했어요."
-
-    # 최종 reply_text 구성
-    final_reply_content = (
-        f"{user.name}({user.major}, {user.grade}학년)\n"
-        f"{reply_text_body}\n"
-        f"질문: {request.message}"
-    )
-
-    # 5) 로그 저장
+    # 4) 로그 저장(요약은 저장용으로 title/link 포함)
+    log_summary = f"{gpt_title}\n{gpt_link or ''}\n{gpt_summary}".strip()
     chat_log = ChatLog(
-        user_id=uid_str, 
-        message=request.message,
-        summary=final_reply_content, 
+        user_id=uid_str,
+        message=question,
+        summary=log_summary,
         timestamp=datetime.utcnow(),
     )
     db.add(chat_log)
     db.commit()
 
-    # 6) 반환
+    # 5) ✅ 캐시에 저장
+    try:
+        upsert_cache(db, question, gpt_title, gpt_link, log_summary)
+    except Exception as e:
+        # 캐시 실패는 서비스 흐름에 영향 주지 않도록 로그만 남김
+        print(f"[WARN] cache upsert 실패: {e}")
+
+    # 6) 응답 (title / link / summary 형식)
     return ChatResponse(
-        reply=final_reply_content, 
-        timestamp=datetime.utcnow().isoformat(),
+        title=gpt_title,
+        link=gpt_link,
+        summary=gpt_summary,
     )
+
+    
+    
+    
 
 # (선택) 디버그용
 @router.get("/debug/notices")

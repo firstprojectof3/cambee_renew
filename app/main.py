@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # DB 관련 import
 from app.database import engine, get_db
-from app.schema_models import Base
+from cambee.app.models.models import Base
 
 # DB 테이블 생성
 Base.metadata.create_all(bind=engine)
