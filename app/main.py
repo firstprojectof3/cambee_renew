@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 # 프로젝트 라우터: 실제 비즈니스 로직은 각 라우터/서비스로 분리
 from app.routers import chat, user, notice, feedback, preference
 
+from app.services.test.insert_dummy_data import get_user_by_id
+from app.schemas import ChatResponse, ChatResponseItem, ChatRequest
+
+
 # (선택) health 라우터가 있으면 함께 포함
 try:
     from app.routers.health import router as health_router
