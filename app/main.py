@@ -11,6 +11,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, get_db
 from cambee.app.models.models import Base
 
+# AI 경로 
+from fastapi import HTTPException
+import os
+from dotenv import load_dotenv
+
+import openai
+
+# AI 경로 (수정 필요)
+
+from app.services.ai.prompt.prompt_builder import build_generic_prompt
+from app.db.userdb import get_user_by_id
+from app.services.ai.ai_setting import call_openai,client
+
+from app.models.chat import ChatResponse, ChatResponseItem, ChatRequest
+import json
+
+# AI 경로 (수정 필요)
+
 # DB 테이블 생성
 Base.metadata.create_all(bind=engine)
 
@@ -37,3 +55,64 @@ app.include_router(preference.router, prefix="/api")
 @app.get("/ping")
 def ping():
     return {"status": "ok"}
+    
+openai.api_key=os.getenv("OPENAI_API_KEY")
+
+@app.get("/")
+def read_root():
+    return {"message": "AI 서버가 정상적으로 작동 중입니다."}
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    user = get_user_by_id(req.user_id)
+    prompt = build_generic_prompt(user, req.message)
+
+    response = call_openai(client, [
+        {"role": "system", "content":prompt},
+        {"role": "user", "content": "다음 형식의 JSON으로만 응답해 주세요: {\"results\": [{\"title\": \"\", \"link\": \"\", \"summary\": \"\"}]} 외의 텍스트는 포함하지 마세요."}
+    ])
+    # print("GPT 응답:", response.choices[0].message.content)
+
+
+    if not response or not response.choices:
+        # fallback 
+        return ChatResponse(
+            results=[
+                ChatResponseItem(
+                    title="응답 실패",
+                    link="",
+                    summary="AI 응답을 가져오지 못했습니다. 다시 시도해 주세요."
+                )
+            ],
+            timestamp=datetime.now().isoformat()
+        )
+
+
+    # GPT 응답 파싱 시도
+    try:
+        parsed_json = json.loads(response.choices[0].message.content)
+
+    # link 필드가 있는 항목만 필터링 (학교 url)
+        items = []
+        for item in parsed_json.get("results", []):
+            if "link" in item and item["link"].startswith("https://"):
+                items.append(ChatResponseItem(**item))
+
+        return ChatResponse(
+            results=items,
+            timestamp=datetime.now().isoformat()
+    )
+    except Exception:
+        return ChatResponse(
+            results=[
+            ChatResponseItem(
+                title="형식 오류",
+                link="",
+                summary="AI 응답 형식을 이해하지 못했습니다. 프롬프트를 조정해 주세요."
+            )
+        ],
+        timestamp=datetime.now().isoformat()
+    )
+
+
+
