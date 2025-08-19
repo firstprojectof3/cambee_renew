@@ -27,7 +27,6 @@ from app.services.ai.ai_setting import call_openai,client
 from app.models.chat import ChatResponse, ChatResponseItem, ChatRequest
 import json
 
-# AI 경로 (수정 필요)
 
 # DB 테이블 생성
 Base.metadata.create_all(bind=engine)
