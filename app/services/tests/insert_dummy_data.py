@@ -44,6 +44,8 @@ test_users = [
     )
 ]
 
+
+
 test_notices = [
     # 학사 test
     Notice(
@@ -99,7 +101,9 @@ test_notices = [
     )
 ]
 
-
+#사용자 조회 함수
+def get_user_by_id(user_id: str) :
+    return usersdb.get(user_id)
 
 
 # 삽입 실행
