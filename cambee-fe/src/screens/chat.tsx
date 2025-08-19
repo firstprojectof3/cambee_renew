@@ -5,7 +5,9 @@ import {
   KeyboardAvoidingView, Platform, Image, SafeAreaView, Linking, ListRenderItem
 } from "react-native";
 import MessageBubble from "../components/MessageBubble";
-import { OUTPUT_SAMPLE } from "../lib/output.sample";
+import { sendChat } from "../services/api";  // API 호출 함수
+import { PROFILE } from "../lib/profile.sample";
+
 
 const C = {
   50:"#FFFAE6",100:"#FEF0B8",200:"#FEE685",300:"#FDDD5D",400:"#FDD430",
@@ -13,91 +15,84 @@ const C = {
 };
 const BORDER = "#D0D0D0";
 
-type Msg = {
-  id: string;
-  type: "user" | "assistant";
-  text?: string;          // 일반 텍스트 응답
-  title?: string;         // 카드형 응답용
-  summary?: string;
-  link?: string;
-};
+type Answer = { title:string; summary:string; link:string };
+type Msg = { id:string; type:"user"|"assistant"; text?:string; answer?:Answer };
+
+function normalizeResult(results: any): {text?:string; answer?:Answer} {
+  try {
+    // 문자열인데 객체 형태면 파싱
+    if (typeof results === "string" && results.trim().startsWith("{")) {
+      results = JSON.parse(results);
+    }
+  } catch {}
+  // 객체에 title/summary/link 있으면 카드
+  if (results && typeof results === "object" && results.title && results.summary && results.link) {
+    return { answer: { title: results.title, summary: results.summary, link: results.link } };
+  }
+  // 그 외는 텍스트
+  return { text: typeof results === "string" ? results : JSON.stringify(results) };
+}
 
 export default function ChatScreen({ navigation }: any){
   const [messages, setMessages] = useState<Msg[]>([
     { id:"welcome",
       type:"assistant",
-      text:"안녕하세요! 1~4번 중 하나를 입력해 보세요 🐝"
+      text:"안녕하세요! 질문을 입력해 보세요 🐝"
     }
   ]);
   const [input, setInput] = useState("");
   const listRef = useRef<FlatList<Msg>>(null);
 
-  const send = () => {
-    const t = input.trim();
-    if (!t) return;
+  const send = async () => {
+  const t = input.trim(); if (!t) return;
+  setMessages(m=>[...m, { id:Date.now()+"", type:"user", text:t }]);
+  setInput("");
 
-    // 1) 내 메시지
-    const mine: Msg = { id: Date.now().toString(), type:"user", text: t };
-    setMessages(m => [...m, mine]);
-    setInput("");
+    // ✅ 프로필 + message 합쳐서 payload 만들기
+  const payload = { ...PROFILE, message: t };
+  console.log("payload -> ", payload);
 
-    // 2) 간단 매핑: "1"~"4" → OUTPUT_SAMPLE 사용
-    const data = OUTPUT_SAMPLE[t as keyof typeof OUTPUT_SAMPLE];
-    if (data) {
-      // 카드형(assistant) 응답: title/summary/link 채워서 렌더
-      const bot: Msg = {
-        id: (Date.now()+1).toString(),
-        type: "assistant",
-        title: data.title,
-        summary: data.summary,
-        link: data.link
-      };
-      setMessages(m => [...m, bot]);
-    } else {
-      // 일반 텍스트 응답
-      const bot: Msg = {
-        id: (Date.now()+1).toString(),
-        type: "assistant",
-        text: "해당 번호에 맞는 공지가 없어요 😅 (1~4를 입력해 보세요)"
-      };
-      setMessages(m => [...m, bot]);
-    }
-  };
+  try {
+    const res = await sendChat(payload);
+    const norm = normalizeResult(res.results);
+    setMessages((m)=>[
+      ...m,
+      norm.answer ? { id:Date.now()+"a", type:"assistant", ...norm.answer } : { id:Date.now()+"b", type:"assistant", text:norm.text }
+    ]);
+  } catch {
+    setMessages(m=>[...m, { id:Date.now()+"e", type:"assistant", text:"서버 오류가 발생했어요 😢"}]);
+  }
+};
+
 
   useEffect(() => {
     listRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
   const renderItem: ListRenderItem<Msg> = ({ item }) => {
-    if (item.type === "user" && item.text) {
-      return <MessageBubble role="user">{item.text}</MessageBubble>;
+  if (item.type==="user" && item.text) return <MessageBubble role="user">{item.text}</MessageBubble>;
+  if (item.type==="assistant") {
+    if (item.answer) {
+      return (
+        <MessageBubble role="assistant">
+          <>
+            <Text style={{ fontWeight:"700", fontSize:17 }}>📖 {item.answer.title}</Text>
+            <View style={{ height:1, backgroundColor:"#d1c269ff", marginVertical:10, marginHorizontal:6 }} />
+            <Text style={{ marginBottom:6 }}>🏷️ {item.answer.summary}</Text>
+            <Text
+              style={{ color:"#545727ff", textDecorationLine:"underline" }}
+              onPress={() => Linking.openURL(item.answer!.link)}
+            >
+              🔗 자세히 보기
+            </Text>
+          </>
+        </MessageBubble>
+      );
     }
-    if (item.type === "assistant") {
-      // 카드형 출력 (title/summary/link가 있을 때)
-      if (item.title && item.summary && item.link) {
-        return (
-          <MessageBubble role="assistant">
-            <>
-              <Text style={{ fontWeight:"700", fontSize:17}}>
-                📖{item.title}
-              </Text>
-              <View style={{ height:1, backgroundColor:"#d1c269ff", marginVertical:10, marginHorizontal: 3 }} />
-              <Text style={{ marginBottom:6 }}>🏷️{item.summary}</Text>
-              <Text
-                style={{ color:"#8b400e94", textDecorationLine:"underline" }}
-                onPress={() => Linking.openURL(item.link!)}
-              >
-                🔗자세한 내용은 이 링크를 참고해주세요
-              </Text>
-            </>
-          </MessageBubble>
-        );
-      }
-      // 일반 텍스트 출력
-      return <MessageBubble role="assistant">{item.text ?? ""}</MessageBubble>;
-    }
-    return null;
-  };
+    return <MessageBubble role="assistant">{item.text ?? ""}</MessageBubble>;
+  }
+  return null;
+};
 
   return (
     <SafeAreaView style={{flex:1, backgroundColor:"#FFF"}}>
@@ -132,7 +127,7 @@ export default function ChatScreen({ navigation }: any){
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="번호를 입력해 주세요 (1~4)"
+              placeholder="질문을 입력해 주세요"
               placeholderTextColor={C[800]}
               style={styles.input}
               multiline
