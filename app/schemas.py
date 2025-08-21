@@ -1,5 +1,6 @@
 from pydantic import BaseModel, constr
 from typing import Optional, List
+from datetime import datetime
 
 # ✅ User 모델 통합
 class User(BaseModel):
@@ -31,22 +32,29 @@ class Summary(BaseModel):
 
 # ✅ ChatRequest 통합
 class ChatRequest(BaseModel):
-    user_id: constr(pattern=r'^\d+$')
-    message: str
-    major: Optional[str] = None
-    grade: Optional[int] = None
-    school: Optional[str] = None
-    income_level: Optional[int] = None
+    user_id: constr(regex=r'^\d+$')
+    message: constr(min_length=1)
+    class Config:
+        orm_mode = True
 
 # ✅ ChatResponse 구조 통일
 class ChatResponseItem(BaseModel):
     title: str
     link: Optional[str] = None
     summary: str
+    class Config:
+        orm_mode = True
 
 class ChatResponse(BaseModel):
     results: List[ChatResponseItem]
-    timestamp: str
+    timestamp: datetime
+    title: Optional[str] = None
+    link: Optional[str] = None
+    summary: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
 
 # ✅ 기타 모델
 class UserPreference(BaseModel):
