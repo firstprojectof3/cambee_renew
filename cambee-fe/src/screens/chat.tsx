@@ -15,21 +15,24 @@ const C = {
 };
 const BORDER = "#D0D0D0";
 
-type Answer = { title:string; summary:string; link:string };
+type Answer = { title:string; summary:string; link:string | null };
 type Msg = { id:string; type:"user"|"assistant"; text?:string; answer?:Answer };
 
-function normalizeResult(results: any): {text?:string; answer?:Answer} {
+function normalizeResult(results: any): { text?: string; answer?: Answer } {
   try {
-    // 문자열인데 객체 형태면 파싱
     if (typeof results === "string" && results.trim().startsWith("{")) {
       results = JSON.parse(results);
     }
   } catch {}
-  // 객체에 title/summary/link 있으면 카드
-  if (results && typeof results === "object" && results.title && results.summary && results.link) {
-    return { answer: { title: results.title, summary: results.summary, link: results.link } };
+  // ✅ 서버가 배열(results)로 주는 형태 지원
+  if (Array.isArray(results) && results[0] && (results[0].title || results[0].summary)) {
+    const r0 = results[0];
+    return { answer: { title: r0.title ?? "결과", summary: r0.summary ?? "", link: r0.link ?? undefined } };
   }
-  // 그 외는 텍스트
+  // 객체 최상위(title/summary/link)도 백업 지원
+  if (results && typeof results === "object" && (results.title || results.summary)) {
+    return { answer: { title: results.title ?? "결과", summary: results.summary ?? "", link: results.link ?? undefined } };
+  }
   return { text: typeof results === "string" ? results : JSON.stringify(results) };
 }
 
@@ -54,10 +57,11 @@ export default function ChatScreen({ navigation }: any){
 
   try {
     const res = await sendChat(payload);
-    const norm = normalizeResult(res.results);
-    setMessages((m)=>[
+    const norm = normalizeResult(res?.results ?? res);
+    setMessages(m=>[
       ...m,
-      norm.answer ? { id:Date.now()+"a", type:"assistant", ...norm.answer } : { id:Date.now()+"b", type:"assistant", text:norm.text }
+      norm.answer ? { id:Date.now()+"a", type:"assistant", answer: norm.answer }
+                  : { id:Date.now()+"b", type:"assistant", text:norm.text }
     ]);
   } catch {
     setMessages(m=>[...m, { id:Date.now()+"e", type:"assistant", text:"서버 오류가 발생했어요 😢"}]);
@@ -73,18 +77,21 @@ export default function ChatScreen({ navigation }: any){
   if (item.type==="user" && item.text) return <MessageBubble role="user">{item.text}</MessageBubble>;
   if (item.type==="assistant") {
     if (item.answer) {
+      const a = item.answer;
       return (
         <MessageBubble role="assistant">
           <>
-            <Text style={{ fontWeight:"700", fontSize:17 }}>📖 {item.answer.title}</Text>
+            <Text style={{ fontWeight:"700", fontSize:17 }}>📖 {a.title}</Text>
             <View style={{ height:1, backgroundColor:"#d1c269ff", marginVertical:10, marginHorizontal:6 }} />
-            <Text style={{ marginBottom:6 }}>🏷️ {item.answer.summary}</Text>
+            <Text style={{ marginBottom:6 }}>🏷️ {a.summary}</Text>
+            {a.link ? (
             <Text
               style={{ color:"#545727ff", textDecorationLine:"underline" }}
-              onPress={() => Linking.openURL(item.answer!.link)}
+              onPress={() => Linking.openURL(a.link as string)}
             >
               🔗 자세히 보기
             </Text>
+            ) : null}
           </>
         </MessageBubble>
       );
@@ -93,6 +100,7 @@ export default function ChatScreen({ navigation }: any){
   }
   return null;
 };
+
 
   return (
     <SafeAreaView style={{flex:1, backgroundColor:"#FFF"}}>

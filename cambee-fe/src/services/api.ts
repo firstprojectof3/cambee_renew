@@ -1,5 +1,5 @@
 // src/lib/api.ts
-const BASE = "http://10.240.94.33:8000";
+const BASE = "http://glowing-telegram-97wv5xvxprq53p9vj-8000.app.github.dev/api";
 
 export async function sendChat(p: any) {
   const url = `${BASE}/chat`;

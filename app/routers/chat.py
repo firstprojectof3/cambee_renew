@@ -165,6 +165,12 @@ def chat_api(body: Dict[str, Any] = Body(...), db: Session = Depends(get_db)):
         except Exception as e:
             print(f"[WARN] cache upsert 실패: {e}")
 
+    # chat_api 마지막 반환부
     item = ChatResponseItem(title=gpt_title, link=gpt_link, summary=gpt_summary)
-    return ChatResponse(results=[item], timestamp=datetime.utcnow(),
-                        title=item.title, link=item.link, summary=item.summary)
+    return ChatResponse(
+    results=[item],
+    timestamp=datetime.utcnow(),
+    title=item.title,      # ✅ 최상위도 채움
+    link=item.link,
+    summary=item.summary,
+    )
