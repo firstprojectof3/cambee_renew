@@ -6,3 +6,8 @@ python-dotenv
 openai
 requests
 pydantic<2
+beautifulsoup4
+requests
+lxml
+python-dateutil
+pytz
