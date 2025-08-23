@@ -15,6 +15,15 @@ except Exception as e:
 # --- 기본 라우터들 ---
 from app.routers import chat, user, notice, feedback, preference
 
+# 라우터 직접 import
+from app.routers.crawl_debug import router as crawl_debug_router
+from app.routers.crawl_admin import router as crawl_admin_router
+from app.routers.schedule_status import router as schedule_status_router
+
+# 스케줄러 start/stop
+from app.schedule.jobs import start_scheduler, shutdown_scheduler
+
+
 # --- AI 라우터(있으면 등록, 없으면 경고만) ---
 ai_router = None
 try:
@@ -54,6 +63,9 @@ app.include_router(user.router, prefix="/api")
 app.include_router(notice.router, prefix="/api")
 app.include_router(feedback.router, prefix="/api")
 app.include_router(preference.router, prefix="/api")
+app.include_router(crawl_debug_router,    prefix="/api")
+app.include_router(crawl_admin_router,    prefix="/api")
+app.include_router(schedule_status_router, prefix="/api")
 if ai_router:
     app.include_router(ai_router, prefix="/api")
 
@@ -76,3 +88,14 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+# --- 스케줄러 추가 ---
+from app.schedule.jobs import start_scheduler, shutdown_scheduler
+
+@app.on_event("startup")
+async def _on_start():
+    start_scheduler()  # 가드가 있어서 중복 호출되어도 안전
+
+@app.on_event("shutdown")
+async def _on_stop():
+    shutdown_scheduler()
