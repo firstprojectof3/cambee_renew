@@ -61,7 +61,8 @@ export default function Register2Screen({ route, navigation }: any){
   return (
     <KeyboardAvoidingView behavior={Platform.select({ios:"padding"})} style={{flex:1}}>
       <ScrollView contentContainerStyle={st.wrap} keyboardShouldPersistTaps="handled">
-        <Text style={st.h1}>학적/프로필 입력</Text>
+        <Text style={st.h1}>프로필을 생성합니다.</Text> 
+        <Text style={st.h1}>개인정보를 입력해주세요.</Text>
 
         <TextInput style={st.inp} placeholder="이름" value={name} onChangeText={setName}/>
         <TextInput style={st.inp} placeholder="학교" value={school} onChangeText={setSchool}/>

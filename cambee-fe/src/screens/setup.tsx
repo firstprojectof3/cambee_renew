@@ -4,6 +4,8 @@ import { View, Text, Pressable, StyleSheet, Alert, Platform } from "react-native
 /// import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"; // expo install @react-native-community/datetimepicker
 import { Ionicons } from "@expo/vector-icons";
 import { savePrefs } from "../services/api";
+import DateTimePicker, {AndroidEvent} from "@react-native-datetimepicker/datetimepicker";
+
 
 const C={50:"#FFFAE6",100:"#FEF0B8",200:"#FEE685",300:"#FDDD5D",400:"#FDD430",500:"#FCCA03",600:"#CFA602",700:"#A28202",800:"#745D01",900:"#473901",950:"#191400",white:"#FFFFFF"};
 
@@ -51,15 +53,32 @@ export default function SetupScreen({ route, navigation }: any){
           </Pressable>
         ))}
       </View>
+    {show && (
+      <View style={st.overlay}>
+        <Pressable style={st.backdrop} onPress={()=>setShow(false)} />
+        <View style={st.sheet}>
+        <View style={st.sheetBar}>
+        <Pressable onPress={()=>setShow(false)}><Text style={st.btnTxt}>취소</Text></Pressable>
+          <Text style={st.sheetTitle}>알림 시간</Text>
+        <Pressable onPress={()=>setShow(false)}><Text style={st.btnTxt}>완료</Text></Pressable>
+        </View>
 
-      <Text style={st.label}>알림 시간</Text>
-<Pressable style={st.timeBtn} onPress={()=>setShow(true)}>
-  <Ionicons name="time-outline" size={20} />
-  <Text style={st.timeT}>
-    {time.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}
-  </Text>
-</Pressable>
-<Text style={st.sub}>매일 해당 시간에 알림을 받아요.</Text>
+        <DateTimePicker
+          value={time}
+          mode="time"
+          is24Hour  
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(e: AndroidEvent, d?: Date) => {
+              if (Platform.OS === "android") { setShow(false); if (d) setTime(d); }
+              else { if (d) setTime(d); } // iOS는 시트 그대로
+            }}
+            style={{ backgroundColor: "#fff" }}
+          />
+        </View>
+        <Text style={st.sub}>매일 해당 시간에 일정 알림을 받아요.</Text>
+      </View>
+    )}
+      
 
       <Pressable style={[st.btn, loading && {opacity:0.6}]} disabled={loading} onPress={onSave}>
         <Text style={st.btnT}>{loading ? "저장 중..." : "완료"}</Text>
@@ -82,4 +101,10 @@ const st=StyleSheet.create({
   timeT:{fontSize:16,fontWeight:"700",color:C[900]},
   btn:{backgroundColor:C[600],padding:14,borderRadius:12,alignItems:"center",borderWidth:1.5,borderColor:C[800],marginTop:16},
   btnT:{fontWeight:"900",color:C.white},
+  overlay:{ position:"absolute", left:0, right:0, top:0, bottom:0, justifyContent:"flex-end" },
+  backdrop:{ ...StyleSheet.absoluteFillObject, backgroundColor:"rgba(0,0,0,0.35)" },
+  sheet:{ backgroundColor:"#fff", borderTopLeftRadius:20, borderTopRightRadius:20, paddingBottom:24, paddingTop:8 },
+  sheetBar:{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", paddingHorizontal:16, paddingBottom:8, borderBottomWidth:1, borderColor:"#eee" },
+  sheetTitle:{ fontWeight:"800", color:"#111" },
+  btnTxt:{ fontWeight:"700", color:"#333" },
 });
