@@ -64,17 +64,17 @@ export default function Register2Screen({ route, navigation }: any){
         <Text style={st.h1}>프로필을 생성합니다.</Text> 
         <Text style={st.h1}>개인정보를 입력해주세요.</Text>
 
-        <TextInput style={st.inp} placeholder="이름" value={name} onChangeText={setName}/>
-        <TextInput style={st.inp} placeholder="학교" value={school} onChangeText={setSchool}/>
-        <TextInput style={st.inp} placeholder="전공" value={major} onChangeText={setMajor}/>
+        <TextInput style={[st.inp, { color: C[950] }]} placeholder="이름" value={name} onChangeText={setName}/>
+        <TextInput style={[st.inp, { color: C[950] }]} placeholder="학교" value={school} onChangeText={setSchool}/>
+        <TextInput style={[st.inp, { color: C[950] }]} placeholder="전공" value={major} onChangeText={setMajor}/>
 
-        <TextInput style={st.inp} placeholder="학번(숫자)" keyboardType="number-pad"
+        <TextInput style={[st.inp, { color: C[950] }]} placeholder="학번(숫자)" keyboardType="number-pad"
           value={student_number} onChangeText={setSid}/>
 
-        <TextInput style={st.inp} placeholder="학년(1~4)"  keyboardType="number-pad"
+        <TextInput style={[st.inp, { color: C[950] }]} placeholder="학년(1~4)"  keyboardType="number-pad"
           value={grade} onChangeText={setGrade}/>
 
-        <TextInput style={st.inp} placeholder="소득분위(1~10)" keyboardType="number-pad"
+        <TextInput style={[st.inp, { color: C[950] }]} placeholder="소득분위(1~10)" keyboardType="number-pad"
           value={income_level} onChangeText={setIncome}/>
 
         <Text style={st.label}>성별</Text>
