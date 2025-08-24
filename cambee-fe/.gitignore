@@ -2,12 +2,18 @@
 
 # dependencies
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+.expo-shared/
+.mexpo-cache/
+.metro-cache/
 
 # Native
 .kotlin/
@@ -35,3 +41,10 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+
+# iOS / Android 빌드
+ios/build/
+android/app/build/
+*.apk
+*.ipa

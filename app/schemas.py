@@ -14,6 +14,15 @@ class User(BaseModel):
     major: str
     id: Optional[int] = None  # DB에서 자동 생성될 수 있으므로 Optional 처리
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    student_number: Optional[int] = None
+    gender: Optional[str] = None
+    grade: Optional[int] = None
+    school: Optional[str] = None
+    income_level: Optional[int] = None
+    major: Optional[str] = None
+
 class UserCreate(User):
     class Config:
         orm_mode = True
@@ -69,3 +78,10 @@ class Feedback(BaseModel):
     feedback_text: Optional[str] = None
     rating: Optional[int] = None
     timestamp: Optional[str] = None
+
+# 로그인
+from pydantic import BaseModel, EmailStr
+class AuthRegister(BaseModel):
+    email: EmailStr; password: str; name: str
+class AuthLogin(BaseModel):
+    email: EmailStr; password: str
