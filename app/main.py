@@ -4,6 +4,9 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import inspect
+from contextlib import asynccontextmanager
+from sqlalchemy import text
+from app.core.config import SETTINGS
 
 # --- DB 스키마 초기화(선택, Alembic 쓰면 제거 가능) ---
 try:
@@ -17,18 +20,9 @@ except Exception as e:
 # --- 기본 라우터들 ---
 import app.routers.chat as chat
 import app.routers.user as user
-import app.routers.notice as notice
-import app.routers.feedback as feedback
 import app.routers.preference as preference
 import app.routers.auth as auth
 
-# 라우터 직접 import
-from app.routers.crawl_debug import router as crawl_debug_router
-from app.routers.crawl_admin import router as crawl_admin_router
-from app.routers.schedule_status import router as schedule_status_router
-
-# 스케줄러 start/stop
-from app.schedule.jobs import start_scheduler, shutdown_scheduler
 
 
 # --- AI 라우터(있으면 등록, 없으면 경고만) ---
@@ -67,26 +61,12 @@ app.add_middleware(
 # --- 라우터 등록 ---
 app.include_router(chat.router, prefix="/api")
 app.include_router(user.router, prefix="/api")
-app.include_router(notice.router, prefix="/api")
-app.include_router(feedback.router, prefix="/api")
 app.include_router(preference.router, prefix="/api")
-app.include_router(crawl_debug_router,    prefix="/api")
-app.include_router(crawl_admin_router,    prefix="/api")
-app.include_router(schedule_status_router, prefix="/api")
 if ai_router:
     app.include_router(ai_router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 
-# --- 스타트업 훅: ai_main이 있으면 실행(동기/비동기 모두 지원) ---
-@app.on_event("startup")
-async def _startup_tasks():
-    if _ai_main_callable:
-        try:
-            result = _ai_main_callable()
-            if inspect.iscoroutine(result):
-                await result
-        except Exception as e:
-            print(f"[WARN] ai_main startup failed: {e}")
+
 
 # --- 헬스체크 & 기본 엔드포인트 ---
 @app.get("/")
@@ -95,15 +75,12 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
-
-# --- 스케줄러 추가 ---
-from app.schedule.jobs import start_scheduler, shutdown_scheduler
-
-@app.on_event("startup")
-async def _on_start():
-    start_scheduler()  # 가드가 있어서 중복 호출되어도 안전
-
-@app.on_event("shutdown")
-async def _on_stop():
-    shutdown_scheduler()
+    return {
+            "status": "ok",
+            "ai_ready": true,
+            "db_ready": true,
+            "prompt_id": "prmpt_xxx",
+            "prompt_version": "latest",
+            "model_general": "gpt-4o-mini",
+            "model_expert": "gpt-4o"
+            }

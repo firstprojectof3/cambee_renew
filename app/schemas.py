@@ -57,9 +57,6 @@ class ChatResponseItem(BaseModel):
 class ChatResponse(BaseModel):
     results: List[ChatResponseItem]
     timestamp: datetime
-    title: Optional[str] = None
-    link: Optional[str] = None
-    summary: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -72,12 +69,6 @@ class UserPreference(BaseModel):
     notification_time: Optional[str] = None
     language: Optional[str] = "ko"
 
-class Feedback(BaseModel):
-    user_id: str
-    message_id: Optional[int] = None
-    feedback_text: Optional[str] = None
-    rating: Optional[int] = None
-    timestamp: Optional[str] = None
 
 # 로그인
 from pydantic import BaseModel, EmailStr

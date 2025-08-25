@@ -46,64 +46,10 @@ test_users = [
 
 
 
-test_notices = [
-    # 학사 test
-    Notice(
-        category="학사",
-        title="2025-2학기 학부 폐강 교과목 안내",
-        content="2025-2학기 수강신청이 종료됨에 따라 폐강 처리된 교과목을 안내드립니다.",
-        url="https://www.ewha.ac.kr/ewha/news/notice.do?mode=view&articleNo=356831&article.offset=0&articleLimit=10&srCategoryId1=25&no=21",
-        date=datetime(2025, 8, 13),
-        target_grade=None,
-        target_major=None,
-        target_student_number=None
-    ),
-    
-    # 학사 test2
-    Notice(
-        category="학사",
-        title="컴퓨터공학 전공인턴십 수강절차 안내",
-        content="컴퓨터공학 인턴십 및 sw 산학실무 설계 교과목 수강 절차를 안내드립니다.",
-        url="https://cse.ewha.ac.kr/cse/student/notice.do?mode=view&articleNo=638645&article.offset=10&articleLimit=10",
-        date=datetime(2022, 2, 14),
-        target_grade=None,
-        target_major="컴퓨터공학전공",
-        target_student_number=None
-    ),
-    
-
-
-    # 장학 test
-    Notice(
-        category="장학",
-        title="2025학년도 2학기 한국장학재단 국가장학금 2차 신청 안내",
-        content="신입생 및 재학생을 위한 국가장학금 2차 신청 안내입니다.",
-        url="https://www.ewha.ac.kr/ewha/news/notice.do?mode=view&articleNo=356694&article.offset=0&articleLimit=10&srCategoryId1=26&no=17",
-        date=datetime(2025, 8, 7),
-        target_grade=None,
-        target_major=None,
-        target_student_number=None
-    ),
-
-    # 식단 test
-    Notice(
-        category="식단",
-        title="2025년 8월 2주차 진선미관 식단표",
-        content="모든 학교 구성원을 위한 식단표 안내입니다.",
-        url="https://www.ewha.ac.kr/ewha/life/restaurant.do?mode=view&articleNo=903&article.offset=0&articleLimit=10",
-        date=datetime(2025, 8, 4),
-        target_grade=None,             
-        target_major=None,         
-        target_student_number=None
-        
-        
-              
-    )
-]
 
 #사용자 조회 함수
 def get_user_by_id(user_id: str) :
-    return usersdb.get(user_id)
+    return test_users.get(user_id)
 
 
 # 삽입 실행

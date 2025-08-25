@@ -29,17 +29,6 @@ class UserPreference(Base):
     language = Column(String(8), default="ko")
 
 
-# 피드백
-class Feedback(Base):
-    __tablename__ = "feedback"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String(64), index=True)
-    message_id = Column(Integer, nullable=True, index=True)
-    feedback_text = Column(Text, nullable=True)
-    rating = Column(Integer, nullable=True, index=True)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-
 
 # 사용자
 class User(Base):
@@ -56,21 +45,3 @@ class User(Base):
     major = Column(String(128), index=True)     # 250804 전공
 
 
-# 공지
-class Notice(Base):
-    __tablename__ = "notices"
-
-    id = Column(Integer, primary_key=True, index=True)
-    category = Column(String(128), index=True)   # 장학, 학사, 등록금 등
-    title = Column(String(512), nullable=False, index=True)
-    content = Column(Text)                       # 본문은 길 수 있어 Text
-    url = Column(String(1024))
-    date = Column(DateTime(timezone=True), index=True)  # 게시일(가능하면 채우기)
-
-    # 250807 필터링용 필드
-    target_grade = Column(Integer, nullable=True, index=True)
-    target_major = Column(String(128), nullable=True, index=True)
-    target_student_number = Column(Integer, nullable=True, index=True)
-
-    # 운영 편의(정렬/백필용)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
