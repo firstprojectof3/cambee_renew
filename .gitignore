@@ -6,8 +6,6 @@
 # --- Python (FastAPI) ---
 venv/
 .venv/
-env/
-ENV/
 __pycache__/
 *.py[cod]
 *.pyo
@@ -23,9 +21,7 @@ logs/
 *.log
 
 # --- Secrets ---
-.env
-.env.*
-!.env.example   # 예시 파일은 허용
+
 
 # --- Node / React Native / Expo ---
 node_modules/

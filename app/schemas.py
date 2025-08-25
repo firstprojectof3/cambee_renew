@@ -27,18 +27,6 @@ class UserCreate(User):
     class Config:
         orm_mode = True
 
-# ✅ Message 모델 통합
-class Message(BaseModel):
-    user_id: str
-    message: str
-    timestamp: str
-
-# ✅ Summary 모델 통합
-class Summary(BaseModel):
-    original_message: str
-    summary_text: str
-    created_at: str
-
 # ✅ ChatRequest 통합
 class ChatRequest(BaseModel):
     user_id: constr(regex=r'^\d+$')

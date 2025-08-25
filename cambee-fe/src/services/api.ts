@@ -1,5 +1,5 @@
 // src/services/api.ts
-const BASE = "https://shiny-parakeet-7vwq5xq49995crj67-8000.app.github.dev/api";
+const BASE = "https://effective-chainsaw-97wv5xvxppqw27xpq-8000.app.github.dev/api";
 
 export async function sendChat(p: any) {
   const url = `${BASE}/chat`;

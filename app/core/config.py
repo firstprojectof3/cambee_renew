@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = BASE_DIR / ".env"
 if ENV_PATH.exists():
-    load_dotenv(ENV_PATH)
+    load_dotenv(ENV_PATH, override=True)
 else:
     print(f"[WARN] .env not found: {ENV_PATH}")
 
@@ -45,7 +45,7 @@ def load_settings() -> Settings:
         model_expert=os.getenv("MODEL_EXPERT", "gpt-4o"),
         cache_ttl_sec=_as_int("CACHE_TTL_SEC", 86400),
         sim_threshold=_as_float("SIM_THRESHOLD", 0.88),
-        cors_origins=_as_list(os.getenv("CORS_ORIGINS", "*")),
+        cors_origins=_as_list(os.getenv("CORS_ORIGINS", "https://effective-chainsaw-97wv5xvxppqw27xpq-8000.app.github.dev")),
     )
 
 SETTINGS = load_settings()

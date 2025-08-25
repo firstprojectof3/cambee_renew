@@ -6,6 +6,8 @@ from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 
 from app.core import config
+from app.core.config import SETTINGS
+
 
 
 def _ensure_sslmode(url: str) -> str:
@@ -38,7 +40,7 @@ def _ensure_sslmode(url: str) -> str:
 
 # 1) .env에서 로드된 DATABASE_URL을 사용 (config.py에서 이미 load_dotenv 완료)
 #    예시) postgresql+psycopg2://USER:PASS@HOST:5432/DBNAME
-DB_URL = _ensure_sslmode(config.DATABASE_URL)
+DB_URL = _ensure_sslmode(SETTINGS.database_url)
 
 if not DB_URL:
     raise RuntimeError(

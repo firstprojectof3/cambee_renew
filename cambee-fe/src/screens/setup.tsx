@@ -4,8 +4,7 @@ import { View, Text, Pressable, StyleSheet, Alert, Platform } from "react-native
 /// import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"; // expo install @react-native-community/datetimepicker
 import { Ionicons } from "@expo/vector-icons";
 import { savePrefs } from "../services/api";
-import DateTimePicker, {AndroidEvent} from "@react-native-datetimepicker/datetimepicker";
-
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 const C={50:"#FFFAE6",100:"#FEF0B8",200:"#FEE685",300:"#FDDD5D",400:"#FDD430",500:"#FCCA03",600:"#CFA602",700:"#A28202",800:"#745D01",900:"#473901",950:"#191400",white:"#FFFFFF"};
 
@@ -68,7 +67,7 @@ export default function SetupScreen({ route, navigation }: any){
           mode="time"
           is24Hour  
           display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(e: AndroidEvent, d?: Date) => {
+            onChange={(e: DateTimePickerEvent, d?: Date) => {
               if (Platform.OS === "android") { setShow(false); if (d) setTime(d); }
               else { if (d) setTime(d); } // iOS는 시트 그대로
             }}
