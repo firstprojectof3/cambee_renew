@@ -11,3 +11,6 @@ requests
 lxml
 python-dateutil
 pytz
+apscheduler
+bcrypt==3.2.2
+passlib[bcrypt]

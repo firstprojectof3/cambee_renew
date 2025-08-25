@@ -8,12 +8,19 @@ import inspect
 # --- DB 스키마 초기화(선택, Alembic 쓰면 제거 가능) ---
 try:
     from app.database import Base, engine
+    from app.models import models            # ✅ 기존 테이블 로드
+    from app.models import auth_account 
     Base.metadata.create_all(bind=engine)
 except Exception as e:
     print(f"[WARN] DB schema init skipped: {e}")
 
 # --- 기본 라우터들 ---
-from app.routers import chat, user, notice, feedback, preference
+import app.routers.chat as chat
+import app.routers.user as user
+import app.routers.notice as notice
+import app.routers.feedback as feedback
+import app.routers.preference as preference
+import app.routers.auth as auth
 
 # 라우터 직접 import
 from app.routers.crawl_debug import router as crawl_debug_router
@@ -68,6 +75,7 @@ app.include_router(crawl_admin_router,    prefix="/api")
 app.include_router(schedule_status_router, prefix="/api")
 if ai_router:
     app.include_router(ai_router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
 
 # --- 스타트업 훅: ai_main이 있으면 실행(동기/비동기 모두 지원) ---
 @app.on_event("startup")

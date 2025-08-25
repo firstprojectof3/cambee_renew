@@ -1,18 +1,23 @@
-// src/screens/auth.tsx
 import React, { useRef, useState } from "react";
-import {
-  View, Text, StyleSheet, TextInput, Pressable, Image, Animated, Easing,
-  KeyboardAvoidingView, Platform
-} from "react-native";
+import { View, Text, StyleSheet, TextInput, Pressable, Image, Animated, Easing,
+         KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { login } from "../services/api"; // 경로 맞게
+import { saveUser } from "../state/auth";
+
 
 const C = {
   50:"#FFFAE6",100:"#FEF0B8",200:"#FEE685",300:"#FDDD5D",400:"#FDD430",
   500:"#FCCA03",600:"#CFA602",700:"#A28202",800:"#745D01",900:"#473901",950:"#191400",white:"#FFFFFF"
 };
 
+
 export default function AuthScreen({ navigation }: any){
   const [remember, setRemember] = useState(false);
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string|null>(null);
   const fEmail = useRef(new Animated.Value(0)).current;
   const fPw = useRef(new Animated.Value(0)).current;
 
@@ -35,6 +40,8 @@ export default function AuthScreen({ navigation }: any){
         style={StyleSheet.absoluteFill}
       />
 
+      {err ? <Text style={{ color:"crimson", textAlign:"center", marginBottom:8 }}>{err}</Text> : null}
+
       <KeyboardAvoidingView behavior={Platform.select({ ios:"padding", android:undefined })} style={styles.wrap}>
         {/* 상단 히어로: 로고 가운데 + 앱명 + 짧은 카피 */}
         <View style={styles.hero}>
@@ -52,6 +59,8 @@ export default function AuthScreen({ navigation }: any){
               placeholderTextColor={C[800]}
               keyboardType="email-address"
               autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
               onFocus={()=>animate(fEmail,1)}
               onBlur={()=>animate(fEmail,0)}
               style={styles.input}
@@ -63,6 +72,8 @@ export default function AuthScreen({ navigation }: any){
               placeholder="비밀번호"
               placeholderTextColor={C[800]}
               secureTextEntry
+              value={pw}
+              onChangeText={setPw}
               onFocus={()=>animate(fPw,1)}
               onBlur={()=>animate(fPw,0)}
               style={styles.input}
@@ -79,13 +90,36 @@ export default function AuthScreen({ navigation }: any){
             </Pressable>
           </View>
 
-          <Pressable style={styles.primaryBtn} onPress={()=>navigation.replace("Home")} accessibilityLabel="로그인">
-            <Text style={styles.primaryText}>로그인</Text>
+          <Pressable 
+            style={[
+              styles.primaryBtn,
+              (!email.includes("@") || pw.length < 4 || loading) && { opacity:0.6 }
+            ]}
+            disabled={!email.includes("@") || pw.length < 4 || loading}
+            onPress={async ()=>{
+              if (loading) return;
+              setErr(null);
+              setLoading(true);
+              try{
+                const res = await login({ email, password: pw });
+                console.log("✅ login ok:", res);
+                await saveUser(res.user);
+                navigation.replace("Home");
+              }catch(e:any){
+                console.log("❌ login err:", e.message);
+                setErr("로그인 실패");
+              }finally{
+                setLoading(false);
+              }
+            }}
+            accessibilityLabel="로그인"
+          >
+            {loading ? <ActivityIndicator /> : <Text style={styles.primaryText}>로그인</Text>}
           </Pressable>
 
           <View style={styles.bottomNote}>
             <Text style={styles.noteText}>계정이 없으신가요? </Text>
-            <Pressable onPress={()=>navigation.navigate("Register")}>
+            <Pressable onPress={()=>navigation.navigate("Register1")}>
               <Text style={[styles.noteText, styles.linkText]}>회원가입</Text>
             </Pressable>
           </View>
@@ -93,7 +127,7 @@ export default function AuthScreen({ navigation }: any){
       </KeyboardAvoidingView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container:{ flex:1  },
